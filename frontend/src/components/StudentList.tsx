@@ -8,6 +8,7 @@ const StudentList = () => {
     const [search, setSearch] = useState('');
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [deleteConfirm, setDeleteConfirm] = useState<{ id: string, code: string } | null>(null);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -27,14 +28,20 @@ const StudentList = () => {
         }
     };
 
-    const handleDelete = async (id: string, studentCode: string) => {
-        if (window.confirm(`Are you sure you want to delete student ${studentCode}?`)) {
-            try {
-                await studentService.delete(id);
-                loadStudents();
-            } catch (err: any) {
-                alert('Failed to delete student: ' + err.message);
-            }
+    const handleDeleteClick = (id: string, studentCode: string) => {
+        setDeleteConfirm({ id, code: studentCode });
+    };
+
+    const confirmDeletion = async () => {
+        if (!deleteConfirm) return;
+
+        try {
+            await studentService.delete(deleteConfirm.id);
+            setDeleteConfirm(null);
+            loadStudents();
+        } catch (err: any) {
+            setError('Failed to delete: ' + err.message);
+            setDeleteConfirm(null);
         }
     };
 
@@ -171,7 +178,7 @@ const StudentList = () => {
                                                         </svg>
                                                     </button>
                                                     <button
-                                                        onClick={() => handleDelete(student._id!, student.studentCode!)}
+                                                        onClick={() => handleDeleteClick(student._id!, student.studentCode!)}
                                                         className="p-2 text-red-600 hover:bg-red-100 rounded-lg transition-all"
                                                         title="Delete"
                                                     >
@@ -210,7 +217,7 @@ const StudentList = () => {
                                                 </svg>
                                             </button>
                                             <button
-                                                onClick={() => handleDelete(student._id!, student.studentCode!)}
+                                                onClick={() => handleDeleteClick(student._id!, student.studentCode!)}
                                                 className="p-2 text-red-600 bg-red-50 rounded-lg"
                                             >
                                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -244,6 +251,30 @@ const StudentList = () => {
             {students.length > 0 && (
                 <div className="text-center text-white/90 text-sm">
                     Showing {students.length} student{students.length !== 1 ? 's' : ''}
+                </div>
+            )}
+
+            {/* Custom Delete Confirmation Modal */}
+            {deleteConfirm && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+                    <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm border border-gray-200 transform scale-100 transition-all">
+                        <h3 className="text-xl font-bold text-gray-900 mb-2">Delete student?</h3>
+                        <p className="text-gray-600 mb-6 text-sm">Are you sure you want to delete  ?</p>
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => setDeleteConfirm(null)}
+                                className="flex-1 py-2 px-4 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-lg transition-colors"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={confirmDeletion}
+                                className="flex-1 py-2 px-4 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-lg transition-colors shadow-lg shadow-red-200"
+                            >
+                                Delete
+                            </button>
+                        </div>
+                    </div>
                 </div>
             )}
         </div>

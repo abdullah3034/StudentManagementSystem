@@ -33,6 +33,7 @@ const StudentForm = () => {
     const [calculatedAge, setCalculatedAge] = useState<number | null>(null);
     const [loading, setLoading] = useState(false);
     const [errors, setErrors] = useState<{ [key: string]: string }>({});
+    const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
 
     useEffect(() => {
         if (isEditMode && id) {
@@ -68,8 +69,8 @@ const StudentForm = () => {
                 email: data.email || '',
             });
         } catch (err: any) {
-            alert('Failed to load student: ' + err.message);
-            navigate('/');
+            setStatusMessage({ type: 'error', text: 'Failed to load student: ' + err.message });
+            // Don't navigate immediately so user can see the error
         }
     };
 
@@ -222,13 +223,14 @@ const StudentForm = () => {
         }
 
         setLoading(true);
+        setStatusMessage(null);
         try {
             if (isEditMode && id) {
                 await studentService.update(id, formData);
-                alert('Student updated successfully!');
+                // No alert, just navigate
             } else {
                 await studentService.create(formData);
-                alert('Student created successfully!');
+                // No alert, just navigate
             }
             navigate('/');
         } catch (err: any) {
@@ -243,19 +245,19 @@ const StudentForm = () => {
 
                 setErrors(formattedErrors);
 
-                // Show specific alert for duplicate email
+                // Show specific message for duplicate email
                 if (formattedErrors.email) {
-                    alert(formattedErrors.email);
+                    setStatusMessage({ type: 'error', text: formattedErrors.email });
                 } else if (err.response?.data?.message) {
-                    alert(err.response.data.message);
+                    setStatusMessage({ type: 'error', text: err.response.data.message });
                 } else {
-                    alert('Please fix the validation errors and try again.');
+                    setStatusMessage({ type: 'error', text: 'Please fix the validation errors and try again.' });
                 }
             } else if (err.response?.data?.message) {
                 // Show the error message from backend
-                alert(err.response.data.message);
+                setStatusMessage({ type: 'error', text: err.response.data.message });
             } else {
-                alert('Failed to save student: ' + (err.message || 'Unknown error'));
+                setStatusMessage({ type: 'error', text: 'Failed to save student: ' + (err.message || 'Unknown error') });
             }
         } finally {
             setLoading(false);
@@ -281,6 +283,23 @@ const StudentForm = () => {
             </div>
 
             <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-6 md:p-8 border border-white/40">
+                {/* Status Message */}
+                {statusMessage && (
+                    <div className={`mb-6 p-4 rounded-xl flex items-center gap-3 ${statusMessage.type === 'success' ? 'bg-green-100 text-green-800 border-2 border-green-200' : 'bg-red-100 text-red-800 border-2 border-red-200'
+                        }`}>
+                        {statusMessage.type === 'success' ? (
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                        ) : (
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
+                        )}
+                        <p className="font-medium">{statusMessage.text}</p>
+                    </div>
+                )}
+
                 {/* Header */}
                 <div className="mb-6 md:mb-8">
                     <div className="flex items-center gap-3 mb-2">
