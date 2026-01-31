@@ -1,7 +1,9 @@
 node_modules/
-.env
 dist/
 .DS_Store
 frontend/dist/
 backend/node_modules/
 frontend/node_modules/
+config.bat
+temp_auto_push.bat
+temp_interactive_push.bat

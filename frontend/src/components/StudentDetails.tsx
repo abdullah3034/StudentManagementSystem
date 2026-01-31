@@ -9,6 +9,8 @@ const StudentDetails = () => {
     const [student, setStudent] = useState<Student | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
     useEffect(() => {
         if (id) {
@@ -29,15 +31,17 @@ const StudentDetails = () => {
         }
     };
 
-    const handleDelete = async () => {
-        if (student && window.confirm(`Are you sure you want to delete student ${student.studentCode}?`)) {
-            try {
-                await studentService.delete(student._id!);
-                alert('Student deleted successfully!');
-                navigate('/');
-            } catch (err: any) {
-                alert('Failed to delete student: ' + err.message);
-            }
+    const confirmDeletion = async () => {
+        if (!student) return;
+
+        setStatusMessage(null);
+        try {
+            await studentService.delete(student._id!);
+            setShowDeleteConfirm(false);
+            navigate('/');
+        } catch (err: any) {
+            setStatusMessage({ type: 'error', text: 'Failed to delete: ' + err.message });
+            setShowDeleteConfirm(false);
         }
     };
 
@@ -70,6 +74,23 @@ const StudentDetails = () => {
 
     return (
         <div className="max-w-4xl mx-auto px-4 space-y-6">
+            {/* Status Message */}
+            {statusMessage && (
+                <div className={`p-4 rounded-xl flex items-center gap-3 ${statusMessage.type === 'success' ? 'bg-green-100 text-green-800 border-2 border-green-200' : 'bg-red-100 text-red-800 border-2 border-red-200'
+                    }`}>
+                    {statusMessage.type === 'success' ? (
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                    ) : (
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                    )}
+                    <p className="font-medium">{statusMessage.text}</p>
+                </div>
+            )}
+
             {/* Header */}
             <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-6 border border-white/40">
                 <div className="flex flex-col md:flex-row justify-between items-start gap-4">
@@ -247,7 +268,7 @@ const StudentDetails = () => {
                     Edit Student
                 </Link>
                 <button
-                    onClick={handleDelete}
+                    onClick={() => setShowDeleteConfirm(true)}
                     className="w-full md:flex-1 px-6 py-3 bg-gradient-to-r from-red-500 to-pink-500 text-white rounded-xl font-semibold hover:shadow-lg transition-all transform hover:scale-105 flex items-center justify-center gap-2"
                 >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -256,6 +277,30 @@ const StudentDetails = () => {
                     Delete Student
                 </button>
             </div>
+
+            {/* Custom Delete Confirmation Modal */}
+            {showDeleteConfirm && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+                    <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm border border-gray-200">
+                        <h3 className="text-xl font-bold text-gray-900 mb-2">Delete student?</h3>
+                        <p className="text-gray-600 mb-6 text-sm">Are you sure you want to delete</p>
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => setShowDeleteConfirm(false)}
+                                className="flex-1 py-2 px-4 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-lg transition-colors"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={confirmDeletion}
+                                className="flex-1 py-2 px-4 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-lg transition-colors shadow-lg shadow-red-200"
+                            >
+                                Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
