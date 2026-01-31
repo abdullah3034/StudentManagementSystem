@@ -30,6 +30,5 @@
       "src": "/(.*)",
       "dest": "/frontend/index.html"
     }
-  ],
-  "cleanUrls": true
+  ]
 }
